@@ -1,41 +1,21 @@
+use crate::commands::handleCommands;
 use block::Block;
 use blockchain::Blockchain;
 use std::env;
 use std::fs;
+use std::io;
+use std::io::*;
 use transaction::Transaction;
+use wallet_manager::WalletManager;
 
 mod block;
 mod blockchain;
+mod commands;
 mod transaction;
+mod wallet;
+mod wallet_manager;
 
 fn main() {
-    let mut chain = Blockchain::new();
-    println!("Length: {}", chain.blocks.len());
-
-    let mut block = chain.get_new_block();
-
-    let transaction = Transaction::new("0".to_owned(), "0".to_owned(), 10.0, "0".to_owned());
-    block.add_transaction(transaction);
-
-    chain.mine_block(&mut block);
-    chain.append_block(block);
-
-    let mut block = chain.get_new_block();
-    let transaction = Transaction::new(
-        "Joe".to_owned(),
-        "Bob".to_owned(),
-        10.0,
-        "123478".to_owned(),
-    );
-    block.add_transaction(transaction);
-
-    chain.mine_block(&mut block);
-    chain.append_block(block);
-
-    println!("Length: {}", chain.blocks.len());
-    for b in chain.blocks {
-        println!("Hash: {}", b.get_hash());
-    }
     // let block = chain.blocks.last().expect("adding block didn't work");
     // println!("Transactions: {}", block.transactions.len())
     // let filename = env::args().nth(1).unwrap();
@@ -45,4 +25,18 @@ fn main() {
 
     // Wallet 1: 3F9FC87321C345A9BB5EC79FE6818
     // Wallet 2: EC22AF2346C943226E4D7D5CBC2FA
+    let mut chain = Blockchain::new();
+    let mut wallet_manager = WalletManager::new();
+
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap();
+
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Couldn't read user input!");
+
+        handleCommands(input, &mut chain, &mut wallet_manager);
+    }
 }

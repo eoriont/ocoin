@@ -8,6 +8,7 @@ use wallet_manager::WalletManager;
 mod block;
 mod blockchain;
 mod commands;
+mod signed_transaction;
 mod transaction;
 mod wallet;
 mod wallet_manager;

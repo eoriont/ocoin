@@ -1,11 +1,11 @@
-use crate::transaction::Transaction;
+use crate::{signed_transaction::SignedTransaction, transaction::Transaction};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 #[derive(Serialize, Deserialize)]
 pub struct Block {
     pub prev_hash: String,
-    pub transactions: Vec<Transaction>,
+    pub transactions: Vec<SignedTransaction>,
     pub nonce: i32,
 }
 
@@ -43,7 +43,7 @@ impl Block {
         format!("{:X}", s.finalize())
     }
 
-    pub fn add_transaction(&mut self, transaction: Transaction) {
+    pub fn add_transaction(&mut self, transaction: SignedTransaction) {
         self.transactions.push(transaction);
     }
 }

@@ -1,11 +1,12 @@
 use crate::block::Block;
+use crate::signed_transaction::SignedTransaction;
 use crate::transaction::Transaction;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
-    pub current_txs: Vec<Transaction>,
+    pub current_txs: Vec<SignedTransaction>,
 }
 
 impl Blockchain {

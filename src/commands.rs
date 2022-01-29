@@ -38,24 +38,41 @@ pub fn handle_commands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut
         }
         "new_wallet" => {
             let name = args[1].to_owned();
-            let priv_key = args[2].to_owned();
-            wallet_manager.add_wallet(name, priv_key);
-            println!("New wallet: {} {}", args[1], args[2]);
+            wallet_manager.new_wallet(name.clone());
+            println!(
+                "New wallet: {} {}",
+                args[1],
+                &wallet_manager.get_wallet(&name).public_key
+            );
         }
         "tx" => {
             let w1 = args[1].to_owned();
             let w2 = args[2].to_owned();
             let amt = args[3].parse::<f64>().unwrap();
             println!("Made new tx: {} {} {}", w1, w2, amt);
-            let tx = Transaction::new(w1, w2, amt, "0".to_owned());
-            chain.current_txs.push(tx);
+            let tx = Transaction::new(w1.clone(), w2, amt);
+            let signed_tx = wallet_manager.get_wallet(&w1).sign_transaction(tx);
+            chain.current_txs.push(signed_tx);
         }
         "print_chain" => {
             println!("Length: {}", chain.blocks.len());
             for b in &chain.blocks {
                 println!("Hash: {}", b.get_hash());
+                for stx in &b.transactions {
+                    let tx = &stx.transaction;
+                    println!(
+                        "| {} {} {} {}",
+                        &tx.sender, &tx.reciever, &tx.amt, &stx.signature
+                    );
+                }
             }
         }
+        "list_wallets" => {
+            for (name, wallet) in &wallet_manager.wallets {
+                println!("{} {}", name, wallet.public_key);
+            }
+        }
+
         _ => println!("Unrecognized command!"),
     }
 }

@@ -1,5 +1,9 @@
+use crate::signed_transaction::SignedTransaction;
+use crate::transaction::Transaction;
+use k256::ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey};
+use rand_core::OsRng;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use std::str;
 
 #[derive(Serialize, Deserialize)]
 pub struct Wallet {
@@ -8,17 +12,26 @@ pub struct Wallet {
 }
 
 impl Wallet {
-    pub fn new(priv_key: String) -> Self {
-        let pub_key = priv_to_pub_key(&priv_key);
+    pub fn new() -> Self {
+        let priv_key = SigningKey::random(&mut OsRng);
+        let pub_key = VerifyingKey::from(&priv_key);
+        let priv_str = hex::encode(priv_key.to_bytes());
+        let pub_str = hex::encode(pub_key.to_bytes());
         Wallet {
-            private_key: priv_key,
-            public_key: pub_key,
+            private_key: priv_str,
+            public_key: pub_str,
         }
     }
-}
 
-pub fn priv_to_pub_key(priv_key: &String) -> String {
-    let mut s = Sha256::new();
-    s.update(priv_key);
-    format!("{:X}", s.finalize())
+    pub fn sign_transaction(&self, transaction: Transaction) -> SignedTransaction {
+        let priv_key_bytes = &hex::decode(&self.private_key).unwrap();
+        let priv_key = SigningKey::from_bytes(&priv_key_bytes).unwrap();
+        let tx_hash = transaction.get_hash();
+        let sig: Signature = priv_key.sign(tx_hash.as_bytes());
+        let sig_str = hex::encode(sig.to_vec());
+        SignedTransaction {
+            transaction,
+            signature: sig_str,
+        }
+    }
 }

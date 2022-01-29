@@ -14,8 +14,12 @@ impl WalletManager {
         }
     }
 
-    pub fn add_wallet(&mut self, name: String, priv_key: String) {
-        let wallet = Wallet::new(priv_key);
+    pub fn new_wallet(&mut self, name: String) {
+        let wallet = Wallet::new();
         self.wallets.insert(name, wallet);
+    }
+
+    pub fn get_wallet(&self, name: &String) -> &Wallet {
+        self.wallets.get(name).expect("no wallet!")
     }
 }

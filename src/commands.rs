@@ -1,10 +1,9 @@
 use crate::wallet_manager::WalletManager;
 use crate::Blockchain;
 use crate::Transaction;
-use serde::{Deserialize, Serialize};
 use std::fs;
 
-pub fn handleCommands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut WalletManager) {
+pub fn handle_commands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut WalletManager) {
     let args: Vec<&str> = cmd.trim().split(" ").collect();
     match args[0] {
         "mine" => {
@@ -12,29 +11,12 @@ pub fn handleCommands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut 
 
             let mut block = chain.get_new_block();
 
-            let transaction =
-                Transaction::new("0".to_owned(), "0".to_owned(), 10.0, "0".to_owned());
-            block.add_transaction(transaction);
+            block.transactions.extend(chain.current_txs.drain(..));
 
             chain.mine_block(&mut block);
             chain.append_block(block);
 
-            let mut block = chain.get_new_block();
-            let transaction = Transaction::new(
-                "Joe".to_owned(),
-                "Bob".to_owned(),
-                10.0,
-                "123478".to_owned(),
-            );
-            block.add_transaction(transaction);
-
-            chain.mine_block(&mut block);
-            chain.append_block(block);
-
-            println!("Length: {}", chain.blocks.len());
-            for b in &chain.blocks {
-                println!("Hash: {}", b.get_hash());
-            }
+            println!("Successfully mined block: {}", chain.get_prev_hash());
         }
         "save_chain" => {
             // Save to a file
@@ -59,6 +41,20 @@ pub fn handleCommands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut 
             let priv_key = args[2].to_owned();
             wallet_manager.add_wallet(name, priv_key);
             println!("New wallet: {} {}", args[1], args[2]);
+        }
+        "tx" => {
+            let w1 = args[1].to_owned();
+            let w2 = args[2].to_owned();
+            let amt = args[3].parse::<f64>().unwrap();
+            println!("Made new tx: {} {} {}", w1, w2, amt);
+            let tx = Transaction::new(w1, w2, amt, "0".to_owned());
+            chain.current_txs.push(tx);
+        }
+        "print_chain" => {
+            println!("Length: {}", chain.blocks.len());
+            for b in &chain.blocks {
+                println!("Hash: {}", b.get_hash());
+            }
         }
         _ => println!("Unrecognized command!"),
     }

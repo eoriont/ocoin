@@ -1,8 +1,5 @@
-use crate::commands::handleCommands;
-use block::Block;
+use crate::commands::handle_commands;
 use blockchain::Blockchain;
-use std::env;
-use std::fs;
 use std::io;
 use std::io::*;
 use transaction::Transaction;
@@ -37,6 +34,6 @@ fn main() {
             .read_line(&mut input)
             .expect("Couldn't read user input!");
 
-        handleCommands(input, &mut chain, &mut wallet_manager);
+        handle_commands(input, &mut chain, &mut wallet_manager);
     }
 }

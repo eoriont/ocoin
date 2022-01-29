@@ -1,14 +1,19 @@
 use crate::block::Block;
+use crate::transaction::Transaction;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
+    pub current_txs: Vec<Transaction>,
 }
 
 impl Blockchain {
     pub fn new() -> Self {
-        Blockchain { blocks: vec![] }
+        Blockchain {
+            blocks: vec![],
+            current_txs: vec![],
+        }
     }
 
     pub fn append_block(&mut self, block: Block) {

@@ -1,6 +1,6 @@
+use crate::blockchain::Blockchain;
+use crate::transaction::Transaction;
 use crate::wallet_manager::WalletManager;
-use crate::Blockchain;
-use crate::Transaction;
 use std::fs;
 
 pub fn handle_commands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut WalletManager) {
@@ -14,9 +14,10 @@ pub fn handle_commands(cmd: String, chain: &mut Blockchain, wallet_manager: &mut
             block.transactions.extend(chain.current_txs.drain(..));
 
             chain.mine_block(&mut block);
-            chain.append_block(block);
-
-            println!("Successfully mined block: {}", chain.get_prev_hash());
+            match chain.append_block(block) {
+                Ok(()) => println!("Successfully mined block: {}", chain.get_prev_hash()),
+                Err(e) => println!("{}", e),
+            }
         }
         "save_chain" => {
             // Save to a file

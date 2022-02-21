@@ -1,6 +1,5 @@
 use crate::block::Block;
 use crate::signed_transaction::SignedTransaction;
-use crate::transaction::Transaction;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -17,8 +16,12 @@ impl Blockchain {
         }
     }
 
-    pub fn append_block(&mut self, block: Block) {
-        self.blocks.push(block);
+    pub fn append_block(&mut self, block: Block) -> Result<(), &str> {
+        if block.validate() {
+            self.blocks.push(block);
+            return Ok(());
+        }
+        return Err("Block didn't validate");
     }
 
     pub fn mine_block(&self, block: &mut Block) {

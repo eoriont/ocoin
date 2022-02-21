@@ -1,8 +1,8 @@
-use crate::{signed_transaction::SignedTransaction, transaction::Transaction};
+use crate::signed_transaction::SignedTransaction;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Block {
     pub prev_hash: String,
     pub transactions: Vec<SignedTransaction>,
@@ -23,7 +23,12 @@ impl Block {
     }
 
     pub fn validate(&self) -> bool {
-        true
+        // true
+        if self.get_hash().starts_with("00") {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     pub fn get_hash(&self) -> String {
@@ -41,9 +46,5 @@ impl Block {
         }
         s.update(self.nonce.to_le_bytes());
         format!("{:X}", s.finalize())
-    }
-
-    pub fn add_transaction(&mut self, transaction: SignedTransaction) {
-        self.transactions.push(transaction);
     }
 }

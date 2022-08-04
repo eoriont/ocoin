@@ -1,6 +1,6 @@
 use crate::wallet::Wallet;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 #[derive(Serialize, Deserialize)]
 pub struct WalletManager {
@@ -9,9 +9,11 @@ pub struct WalletManager {
 
 impl WalletManager {
     pub fn new() -> Self {
-        WalletManager {
+        let mut wallet_manager = WalletManager {
             wallets: HashMap::new(),
-        }
+        };
+        wallet_manager.new_wallet("0".to_string()); 
+        wallet_manager
     }
 
     pub fn new_wallet(&mut self, name: String) {

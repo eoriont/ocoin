@@ -91,6 +91,8 @@ fn execute_command(node: &mut Node, cli: Cli) {
             // Wallets
             let wallets_str = serde_json::to_string(&node.wallet_manager).expect("test save");
             let _res = fs::write(WALLETS_FILE, wallets_str);
+
+            println!("Successfully saved the blockchain to {} and {}", BLOCKCHAIN_FILE, WALLETS_FILE);
         }
         Commands::LoadBlockchain => {
             // Blockchain
@@ -100,6 +102,8 @@ fn execute_command(node: &mut Node, cli: Cli) {
             // Wallets
             let wallets_str = fs::read_to_string(WALLETS_FILE).expect("test load");
             node.wallet_manager = serde_json::from_str::<WalletManager>(&wallets_str).expect("test deserialize");
+
+            println!("Successfully loaded the blockchain from {} and {}", BLOCKCHAIN_FILE, WALLETS_FILE);
         }
         Commands::NewWallet { name } => {
             node.wallet_manager.new_wallet(name.clone());
@@ -109,10 +113,15 @@ fn execute_command(node: &mut Node, cli: Cli) {
                 node.wallet_manager.get_wallet(&name).public_key
             );
         }
-        Commands::Mine => {
+        Commands::Mine { wallet } => {
             println!("Length: {}", node.blockchain.blocks.len());
 
             let mut block = node.blockchain.get_new_block();
+
+            // Mining reward
+            node.blockchain.current_txs.push(
+                node.wallet_manager.get_wallet(&"0".to_string()).sign_transaction(Transaction::new("0".to_string(), wallet, 10.0))
+            );
 
             block.transactions.extend(node.blockchain.current_txs.drain(..));
 

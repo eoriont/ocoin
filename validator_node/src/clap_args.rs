@@ -33,5 +33,8 @@ pub enum Commands {
         #[clap(value_parser)]
         name: String
     },
-    Mine
+    Mine {
+        #[clap(value_parser)]
+        wallet: String
+    }
 }

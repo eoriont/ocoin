@@ -4,7 +4,6 @@ use std::{
     hash::{Hash, Hasher},
     time::Duration,
 };
-
 use libp2p::{
     gossipsub::{
         self,
@@ -16,8 +15,8 @@ use libp2p::{
     swarm::SwarmEvent,
     Multiaddr, PeerId, Swarm,
 };
-
 use crate::message::Message;
+use libp2p::futures::StreamExt;
 
 pub struct Communicator {
     pub swarm: Swarm<Gossipsub>,
@@ -65,7 +64,7 @@ impl Communicator {
         let transport = libp2p::development_transport(local_key.clone()).await?;
 
         // Create a Gossipsub topic
-        let topic = Topic::new("transactions");
+        let topic = Topic::new("blockchain");
 
         // Create a Swarm to manage peers and events
         let mut swarm = {
@@ -135,5 +134,9 @@ impl Communicator {
                 println!("{:?}", x)
             }
         }
+    }
+
+    pub async fn get_next_event(&mut self) -> SwarmEvent<GossipsubEvent, GossipsubHandlerError> {
+        self.swarm.select_next_some().await
     }
 }

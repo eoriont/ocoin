@@ -1,6 +1,6 @@
 use crate::wallet::Wallet;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap};
 
 #[derive(Serialize, Deserialize)]
 pub struct WalletManager {

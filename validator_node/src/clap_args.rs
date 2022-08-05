@@ -38,5 +38,9 @@ pub enum Commands {
         wallet: String
     },
     DisplayBalances,
-    Quit
+    Quit,
+    Connect {
+        #[clap(value_parser)]
+        addr: String
+    }
 }

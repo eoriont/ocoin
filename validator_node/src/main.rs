@@ -3,12 +3,13 @@ pub mod node;
 pub mod communicator;
 pub mod clap_args;
 
-use std::fs;
+use std::{fs};
 
 use blockchain::{transaction::Transaction, blockchain::Blockchain, wallet_manager::WalletManager};
 use clap::{Parser};
-use async_std::{io::{stdin, stdout, WriteExt}};
+use async_std::{io::{prelude::*, stdin, stdout, WriteExt, BufReader}};
 use clap_args::{Cli, Commands};
+use futures::{select, StreamExt};
 use node::Node;
 
 const BLOCKCHAIN_FILE: &str = "./1.ocoin_blockchain";
@@ -18,16 +19,24 @@ const WALLETS_FILE: &str = "./1.ocoin_wallets";
 async fn main() -> anyhow::Result<()> {
     let mut node = Node::new().await;
 
-    loop {
-        print!("> ");
-        stdout().flush().await.unwrap();
-        let mut input = String::new();
-        stdin().read_line(&mut input).await.unwrap();
+    // TODO: put this on multiple threads instead of a select
+    // That requires some sort of mutex (an arc perhaps?)
+    print!("> ");
+    stdout().flush().await.unwrap();
+    let mut stdin = BufReader::new(stdin()).lines().fuse();
 
-        let command = Cli::try_parse_from(format!("cli {}", input).split_whitespace());
-        match command {
-            Ok(command) => execute_command(&mut node, command),
-            Err(e) => println!("{}", e)
+    loop {
+        select! {
+            input = stdin.select_next_some() => {
+                let command = Cli::try_parse_from(format!("cli {}", input.unwrap()).split_whitespace());
+                match command {
+                    Ok(command) => execute_command(&mut node, command),
+                    Err(e) => println!("{}", e)
+                }
+                print!("> ");
+                stdout().flush().await.unwrap()
+            },
+            event = node.communicator.swarm.select_next_some() => node.communicator.handle_network_event(event)
         }
     }
 }
@@ -142,6 +151,14 @@ fn execute_command(node: &mut Node, cli: Cli) {
         Commands::Quit => {
             println!("Quitting. Goodbye!");
             std::process::exit(0)
+        }
+        Commands::Connect { addr } => {
+            // TODO: take prints out to top level
+            if let Ok(multiaddr) = addr.parse() {
+                async_std::task::block_on(node.communicator.connect(multiaddr));
+            } else {
+                println!("Invalid address: {}", addr)
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash, error::Error};
+use std::{collections::HashMap};
 
 use crate::block::Block;
 use crate::signed_transaction::SignedTransaction;

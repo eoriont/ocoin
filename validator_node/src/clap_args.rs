@@ -36,5 +36,6 @@ pub enum Commands {
     Mine {
         #[clap(value_parser)]
         wallet: String
-    }
+    },
+    DisplayBalances
 }

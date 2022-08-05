@@ -16,3 +16,4 @@ p256 = "0.10.1"
 rand_core = "0.6.3"
 k256 = { version = "0.10.2", features = ["ecdsa", "ecdsa-core"] }
 hex = "0.4.3"
+anyhow = "1.0.59"

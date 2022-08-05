@@ -22,13 +22,8 @@ impl Block {
         self.nonce += 1;
     }
 
-    pub fn validate(&self) -> bool {
-        // true
-        if self.get_hash().starts_with("00") {
-            return true;
-        } else {
-            return false;
-        }
+    pub fn validate_pow(&self) -> bool {
+        self.get_hash().starts_with("00")
     }
 
     pub fn get_hash(&self) -> String {

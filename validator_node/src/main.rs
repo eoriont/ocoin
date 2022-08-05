@@ -5,7 +5,7 @@ pub mod clap_args;
 
 use std::fs;
 
-use blockchain::{transaction::Transaction, signed_transaction::SignedTransaction, block::Block, blockchain::Blockchain, wallet_manager::WalletManager};
+use blockchain::{transaction::Transaction, blockchain::Blockchain, wallet_manager::WalletManager};
 use clap::{Parser};
 use async_std::{io::{stdin, stdout, WriteExt}};
 use clap_args::{Cli, Commands};
@@ -41,7 +41,13 @@ fn execute_command(node: &mut Node, cli: Cli) {
             let tx = Transaction::new(wallet1.clone(), wallet2, amount);
             let signed_tx = node.wallet_manager.get_wallet(&wallet1).sign_transaction(tx);
             node.blockchain.current_txs.push(signed_tx);
-            println!("Added transaction!");
+
+            if let Ok(_) = node.blockchain.validate_new_transactions(&node.blockchain.current_txs) {
+                println!("Successfully added transaction!");
+            } else {
+                node.blockchain.current_txs.pop();
+                println!("Error: invalid transaction!");
+            }
         }
         Commands::DisplayBlockchain => {
             println!("Length: {}", node.blockchain.blocks.len());
@@ -131,6 +137,16 @@ fn execute_command(node: &mut Node, cli: Cli) {
                 Err(e) => println!("{}", e),
             }
 
+        }
+        Commands::DisplayBalances => {
+            let wallet_state = node.blockchain.validate_new_transactions(&node.blockchain.current_txs).unwrap();
+
+            for (wallet, amount) in wallet_state.into_iter() {
+                println!(
+                    "| {} {}",
+                    wallet, amount
+                );
+            }
         }
     }
 }

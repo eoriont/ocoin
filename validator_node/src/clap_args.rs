@@ -37,5 +37,6 @@ pub enum Commands {
         #[clap(value_parser)]
         wallet: String
     },
-    DisplayBalances
+    DisplayBalances,
+    Quit
 }

@@ -139,5 +139,9 @@ fn execute_command(node: &mut Node, cli: Cli) {
                 );
             }
         }
+        Commands::Quit => {
+            println!("Quitting. Goodbye!");
+            std::process::exit(0)
+        }
     }
 }

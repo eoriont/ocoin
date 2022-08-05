@@ -40,12 +40,12 @@ fn execute_command(node: &mut Node, cli: Cli) {
         Commands::NewTx { wallet1, wallet2, amount } => {
             let tx = Transaction::new(wallet1.clone(), wallet2, amount);
             let signed_tx = node.wallet_manager.get_wallet(&wallet1).sign_transaction(tx);
-            node.blockchain.current_txs.push(signed_tx);
+            node.mempool.transactions.push(signed_tx);
 
-            if let Ok(_) = node.blockchain.validate_new_transactions(&node.blockchain.current_txs) {
+            if let Ok(_) = node.blockchain.validate_new_transactions(&node.mempool.transactions) {
                 println!("Successfully added transaction!");
             } else {
-                node.blockchain.current_txs.pop();
+                node.mempool.transactions.pop();
                 println!("Error: invalid transaction!");
             }
         }
@@ -81,7 +81,7 @@ fn execute_command(node: &mut Node, cli: Cli) {
             }
         }
         Commands::DisplayCurrentTransactions => {
-            for stx in &node.blockchain.current_txs {
+            for stx in &node.mempool.transactions {
                 let tx = &stx.transaction;
                 println!(
                     "| {} {} {} {}",
@@ -122,24 +122,15 @@ fn execute_command(node: &mut Node, cli: Cli) {
         Commands::Mine { wallet } => {
             println!("Length: {}", node.blockchain.blocks.len());
 
-            let mut block = node.blockchain.get_new_block();
+            let block = node.mempool.mine(node.blockchain.get_prev_hash(), node.wallet_manager.get_wallet(&"0".to_string()), wallet);
 
-            // Mining reward
-            node.blockchain.current_txs.push(
-                node.wallet_manager.get_wallet(&"0".to_string()).sign_transaction(Transaction::new("0".to_string(), wallet, 10.0))
-            );
-
-            block.transactions.extend(node.blockchain.current_txs.drain(..));
-
-            node.blockchain.mine_block(&mut block);
             match node.blockchain.append_block(block) {
                 Ok(()) => println!("Successfully mined block: {}", node.blockchain.get_prev_hash()),
                 Err(e) => println!("{}", e),
             }
-
         }
         Commands::DisplayBalances => {
-            let wallet_state = node.blockchain.validate_new_transactions(&node.blockchain.current_txs).unwrap();
+            let wallet_state = node.blockchain.validate_new_transactions(&node.mempool.transactions).unwrap();
 
             for (wallet, amount) in wallet_state.into_iter() {
                 println!(

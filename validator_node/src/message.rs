@@ -1,11 +1,10 @@
-use blockchain::{block::Block, signed_transaction::SignedTransaction};
+use blockchain::{block::Block, blockchain::Blockchain, wallet_manager::WalletManager};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Message {
-    NewTransaction(SignedTransaction),
-    CancelTransaction(SignedTransaction),
-    NewBlock(Block),
-    RetrieveTransactions,
-    ListTransactions(Vec<SignedTransaction>),
+    RetrieveBlockchain,
+    Blockchain(Blockchain, WalletManager),
+
+    NewBlock(Block, WalletManager),
 }

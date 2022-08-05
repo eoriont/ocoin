@@ -5,7 +5,7 @@ use crate::signed_transaction::SignedTransaction;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
 }

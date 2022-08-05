@@ -2,7 +2,7 @@ use crate::signed_transaction::SignedTransaction;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Block {
     pub prev_hash: String,
     pub transactions: Vec<SignedTransaction>,

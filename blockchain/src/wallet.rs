@@ -5,7 +5,7 @@ use rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use std::str;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Wallet {
     pub private_key: String,
     pub public_key: String,

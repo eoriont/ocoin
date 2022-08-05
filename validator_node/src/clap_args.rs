@@ -42,5 +42,6 @@ pub enum Commands {
     Connect {
         #[clap(value_parser)]
         addr: String
-    }
+    },
+    RetrieveBlockchain
 }

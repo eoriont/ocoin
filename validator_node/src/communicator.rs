@@ -17,6 +17,7 @@ use libp2p::{
 };
 use crate::message::Message;
 use libp2p::futures::StreamExt;
+use async_std::{io::{stdout, WriteExt}};
 
 pub struct Communicator {
     pub swarm: Swarm<Gossipsub>,
@@ -34,9 +35,9 @@ impl Communicator {
         }
     }
 
-    pub fn request_synchronise(&mut self) {
-        self.publish_message(&Message::RetrieveTransactions);
-    }
+    // pub fn request_synchronise(&mut self) {
+    //     self.publish_message(&Message::RetrieveTransactions);
+    // }
 
     pub fn publish_message(&mut self, msg: &Message) {
         // todo
@@ -120,11 +121,12 @@ impl Communicator {
         };
     }
 
-    pub fn handle_network_event(&mut self, msg: SwarmEvent<GossipsubEvent, GossipsubHandlerError>) {
+    pub fn handle_network_event(&mut self, msg: SwarmEvent<GossipsubEvent, GossipsubHandlerError>) -> Option<Message> {
+        println!("");
         match msg {
             SwarmEvent::Behaviour(GossipsubEvent::Message { message, .. }) => {
-                let _mempool_message = serde_json::from_slice::<Message>(&message.data).unwrap();
-                // self.handle_message(mempool_message)
+                let mempool_message = serde_json::from_slice::<Message>(&message.data).unwrap();
+                return Some(mempool_message);
             }
             SwarmEvent::NewListenAddr { address, .. } => {
                 println!("Listening on {:?}", address);
@@ -134,9 +136,13 @@ impl Communicator {
                 println!("{:?}", x)
             }
         }
+        print!("> ");
+        async_std::task::block_on(stdout().flush()).unwrap();
+        None
     }
 
     pub async fn get_next_event(&mut self) -> SwarmEvent<GossipsubEvent, GossipsubHandlerError> {
         self.swarm.select_next_some().await
     }
+
 }

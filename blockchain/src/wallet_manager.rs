@@ -2,7 +2,7 @@ use crate::wallet::Wallet;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WalletManager {
     pub wallets: HashMap<String, Wallet>,
 }
@@ -23,5 +23,9 @@ impl WalletManager {
 
     pub fn get_wallet(&self, name: &String) -> &Wallet {
         self.wallets.get(name).expect("no wallet!")
+    }
+
+    pub fn combine(&mut self, wallet_manager: WalletManager) {
+        self.wallets.extend(wallet_manager.wallets);
     }
 }

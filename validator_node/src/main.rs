@@ -3,13 +3,14 @@ pub mod node;
 pub mod communicator;
 pub mod clap_args;
 
-use std::{fs};
+use std::{fs, cmp::{Ordering}};
 
-use blockchain::{transaction::Transaction, blockchain::Blockchain, wallet_manager::WalletManager};
+use blockchain::{transaction::Transaction, blockchain::Blockchain, wallet_manager::{WalletManager, self}};
 use clap::{Parser};
 use async_std::{io::{prelude::*, stdin, stdout, WriteExt, BufReader}};
 use clap_args::{Cli, Commands};
 use futures::{select, StreamExt};
+use message::Message;
 use node::Node;
 
 const BLOCKCHAIN_FILE: &str = "./1.ocoin_blockchain";
@@ -36,7 +37,11 @@ async fn main() -> anyhow::Result<()> {
                 print!("> ");
                 stdout().flush().await.unwrap()
             },
-            event = node.communicator.swarm.select_next_some() => node.communicator.handle_network_event(event)
+            event = node.communicator.swarm.select_next_some() => {
+                if let Some(message) = node.communicator.handle_network_event(event) {
+                    handle_message(&mut node, message);
+                }
+            }
         }
     }
 }
@@ -133,8 +138,11 @@ fn execute_command(node: &mut Node, cli: Cli) {
 
             let block = node.mempool.mine(node.blockchain.get_prev_hash(), node.wallet_manager.get_wallet(&"0".to_string()), wallet);
 
-            match node.blockchain.append_block(block) {
-                Ok(()) => println!("Successfully mined block: {}", node.blockchain.get_prev_hash()),
+            match node.blockchain.append_block(block.clone()) {
+                Ok(()) => {
+                    println!("Successfully mined block: {}", node.blockchain.get_prev_hash());
+                    node.communicator.publish_message(&Message::NewBlock(block, node.wallet_manager.clone()));
+                }
                 Err(e) => println!("{}", e),
             }
         }
@@ -156,8 +164,45 @@ fn execute_command(node: &mut Node, cli: Cli) {
             // TODO: take prints out to top level
             if let Ok(multiaddr) = addr.parse() {
                 async_std::task::block_on(node.communicator.connect(multiaddr));
+                // Possibly ask to retrieve blockchain?
             } else {
                 println!("Invalid address: {}", addr)
+            }
+        }
+        Commands::RetrieveBlockchain => {
+            node.communicator.publish_message(&Message::RetrieveBlockchain);
+        }
+    }
+}
+
+fn handle_message(node: &mut Node, message: Message) {
+    match message {
+        Message::RetrieveBlockchain => {
+            let msg = Message::Blockchain(node.blockchain.clone(), node.wallet_manager.clone());
+            node.communicator.publish_message(&msg);
+        }
+        Message::Blockchain(blockchain, wallet_manager) => {
+            node.wallet_manager.combine(wallet_manager);
+            match blockchain.blocks.len().cmp(&node.blockchain.blocks.len()) {
+                Ordering::Less => {
+                    println!("Current blockchain is newer");
+                    // Maybe notify others?
+                }
+                Ordering::Equal => {
+                    // same length
+                    // check if the blocks are the same?
+                }
+                Ordering::Greater => {
+                    println!("Replaced blockchain with new one");
+                    node.blockchain = blockchain;
+                }
+            }
+        }
+        Message::NewBlock(block, wallet_manager) => {
+            node.wallet_manager.combine(wallet_manager);
+            match node.blockchain.append_block(block) {
+                Ok(()) => println!("Successfully added new block: {}", node.blockchain.get_prev_hash()),
+                Err(e) => println!("{}", e),
             }
         }
     }
